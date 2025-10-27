@@ -81,74 +81,107 @@ export default function AdminOrdersPage() {
         setSelectedOrderId(orderId);
     };
 
-  async function updateOrderStatus(orderId, newStatus) {
-  try {
-    if (newStatus === "Shipped") {
-      const orderGroup = groupedOrders[orderId];
-      const freshDetailsMap = await fetchAllProductDetails(orderGroup.items);
-      const payload = {
-        orderId: orderGroup.orderId,
-        name: orderGroup.user.name,
-        number: orderGroup.user.number,
-        email: orderGroup.user.email, // maybe Delhivery doesn’t need email but you can send
-        address: orderGroup.items[0].fullAddress,
-        city: orderGroup.items[0].city,
-        state: orderGroup.items[0].state,
-        pincode: orderGroup.items[0].pincode,
-        amount: orderGroup.amount,
-        method: orderGroup.items[0].method,
-        items: orderGroup.items.map((item) => ({
-          productId: item.productId,
-          productName: freshDetailsMap[item.productId]?.productName,
-          quantity: item.quantity,
-          amount: item.amount,
-        })),
-      };
+    async function updateOrderStatus(orderId, newStatus) {
+        try {
+            if (newStatus === "Shipped") {
+                const orderGroup = groupedOrders[orderId];
+                if (!orderGroup) {
+                    alert("Order group not found");
+                    return;
+                }
 
-      const delhiveryRes = await fetch("/api/delhivery/order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.NEXT_PUBLIC_API_KEY, // if you use this; or you may not need this header
-        },
-        body: JSON.stringify(payload),
-      });
+                const freshDetailsMap = await fetchAllProductDetails(orderGroup.items);
 
-      const result = await delhiveryRes.json();
-console.log("Delhivery Response:", result);
+                // Enhanced payload with validation
+                const payload = {
+                    orderId: orderGroup.orderId,
+                    name: orderGroup.user.name?.trim(),
+                    number: orderGroup.user.number,
+                    email: orderGroup.user.email,
+                    address: orderGroup.items[0]?.fullAddress,
+                    city: orderGroup.items[0]?.city,
+                    state: orderGroup.items[0]?.state,
+                    pincode: orderGroup.items[0]?.pincode,
+                    amount: orderGroup.amount,
+                    method: orderGroup.method,
+                    items: orderGroup.items.map((item) => ({
+                        productId: item.productId,
+                        productName: freshDetailsMap[item.productId]?.productName || `Product ${item.productId}`,
+                        quantity: item.quantity,
+                        amount: item.amount,
+                    })),
+                };
+
+                // Validate address data before sending
+                if (!payload.address || !payload.city || !payload.state || !payload.pincode) {
+                    alert("Missing shipping address details. Please check the order information.");
+                    return;
+                }
+
+                console.log("Sending to Delhivery API:", payload);
+
+                try {
+                    const delhiveryRes = await fetch("/api/delhivery/order", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    // Handle non-JSON responses
+                    const responseText = await delhiveryRes.text();
+                    let result;
+
+                    try {
+                        result = responseText ? JSON.parse(responseText) : {};
+                    } catch (parseError) {
+                        console.error("Failed to parse JSON response:", responseText);
+                        throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
+                    }
+
+                    console.log("Delhivery Response:", result);
+
+                    if (!delhiveryRes.ok) {
+                        throw new Error(result.error || `HTTP ${delhiveryRes.status}: ${result.details || 'Unknown error'}`);
+                    }
+
+                    if (!result.success) {
+                        throw new Error(result.error || "Failed to create shipment");
+                    }
+
+                    console.log("Shipment created successfully. Waybill:", result.waybill);
+
+                } catch (delhiveryError) {
+                    console.error("Delhivery API Error:", delhiveryError);
+                    alert(`Failed to create Delhivery shipment: ${delhiveryError.message}`);
+                    return; // Stop here if Delhivery failed
+                }
+            }
+
+            // Continue with status update only if Delhivery succeeded
+            const res = await fetch("/api/order/status", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-api-key": process.env.NEXT_PUBLIC_API_KEY, // ✅ send key
+                },
+                body: JSON.stringify({ orderId, status: newStatus }),
+            });
 
 
-      if (!delhiveryRes.ok) {
-        alert("Failed to ship via Delhivery");
-        console.error("Delhivery error:", result);
-        return;
-      }
-
-      console.log("Delhivery Response:", result);
+            const statusResult = await res.json();
+            if (res.ok) {
+                alert("Order status updated and shipment created successfully!");
+                fetchOrders();
+            } else {
+                alert(statusResult.error || "Failed to update order status");
+            }
+        } catch (error) {
+            console.error("Error updating status:", error);
+            alert("Error occurred: " + error.message);
+        }
     }
-
-    // Then your existing order status update etc.
-    const res = await fetch("/api/order/status", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
-      },
-      body: JSON.stringify({ orderId, status: newStatus }),
-    });
-
-    const statusResult = await res.json();
-    if (res.ok) {
-      alert("Order status updated");
-      fetchOrders();
-    } else {
-      alert(statusResult.error || "Failed to update");
-    }
-  } catch (error) {
-    console.error("Error updating status:", error);
-    alert("Error occurred");
-  }
-}
 
 
 
