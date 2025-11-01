@@ -32,39 +32,50 @@ export async function POST(req) {
     // 🆕 Calculate total quantity for scaling
     const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
-    const orderPayload = {
-      order_id: orderId,
-      order_date: new Date().toISOString().split("T")[0],
-      billing_customer_name: name,
-      billing_last_name: ".", // Shiprocket requires a last name
-      billing_address: address.split("\n")[0] || address,
-      billing_address_2: address.split("\n")[1] || "",
-      billing_city: city,
-      billing_state: state,
-      billing_pincode: pincode,
-      billing_country: "India",
-      billing_email: email,
-      billing_phone: number,
-      shipping_is_billing: true,
-      order_items: items.map((item) => {
-        const basePrice = item.amount / item.quantity;
-        const sellingPrice = paymentMethod === "Prepaid" ? basePrice - 100 : basePrice;
-        return {
-          name: item.productName,
-          sku: item.productId,
-          units: item.quantity,
-          selling_price: Math.max(sellingPrice, 1), // Avoid negative or zero price
-        };
-      }),
-      payment_method: paymentMethod,
-      sub_total: amount,
+const orderPayload = {
+  order_id: orderId,
+  order_date: new Date().toISOString().split("T")[0],
+  pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION, // ✅ required field
+  channel_id: "", // optional
+  billing_customer_name: name,
+  billing_last_name: ".",
+  billing_address: address.split("\n")[0] || address,
+  billing_address_2: address.split("\n")[1] || "",
+  billing_city: city,
+  billing_state: state,
+  billing_pincode: pincode,
+  billing_country: "India",
+  billing_email: email,
+  billing_phone: number,
+  shipping_is_billing: true,
 
-      // 🆕 Dynamically scale size/weight
-      length: parseInt(process.env.SHIPPING_LENGTH), // unchanged — assuming products are side-by-side
-      breadth: parseInt(process.env.SHIPPING_WIDTH), // unchanged
-      height: parseInt(process.env.SHIPPING_HEIGHT) * totalQuantity, // stack height
-      weight: (parseFloat(process.env.SHIPPING_WEIGHT) * totalQuantity) / 1000, // convert g → kg
+  order_items: items.map((item) => {
+    const basePrice = item.amount / item.quantity;
+    return {
+      name: item.productName,
+      sku: item.productId,
+      units: item.quantity,
+      selling_price: basePrice,       // inclusive of GST
+      discount: item.discount || 0,   // optional
+      tax: item.tax || 3,            // ✅ specify GST % (set default 18 or per product)
+      hsn: item.hsn || "7113",        // optional but useful for jewelry/accessories etc
     };
+  }),
+
+  payment_method: method === "COD" ? "COD" : "Prepaid",
+  shipping_charges: 0,
+  total_discount: 0,
+  sub_total: amount,
+  length: parseFloat(process.env.SHIPPING_LENGTH || 10),
+  breadth: parseFloat(process.env.SHIPPING_WIDTH || 10),
+  height: parseFloat(process.env.SHIPPING_HEIGHT || 10),
+  weight: parseFloat(process.env.SHIPPING_WEIGHT || 0.5),
+
+  order_type: "NON ESSENTIALS", // optional
+  is_insurance_opt: false, // optional
+};
+
+
 
     console.log("Sending order payload to Shiprocket:", JSON.stringify(orderPayload, null, 2));
 

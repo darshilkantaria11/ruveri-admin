@@ -14,22 +14,26 @@ export async function GET(req) {
     return NextResponse.json({ token: cachedToken });
   }
 
+  // 🧩 Add these lines for debugging
+  console.log("Shiprocket Email:", process.env.SHIPROCKET_EMAIL);
+  console.log("Password exists:", !!process.env.SHIPROCKET_PASSWORD);
+
   const res = await fetch("https://apiv2.shiprocket.in/v1/external/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email: process.env.SHIPROCKET_EMAIL,
-      password: process.env.SHIPROCKET_PASSWORD,
+      password: "qI6n$hN#kmse8C!K",
     }),
   });
 
   const data = await res.json();
-  
 
+  // 🧩 Optional: Log the full response if token fails
   if (!data.token) {
+    console.error("Shiprocket login failed response:", data);
     return NextResponse.json({ error: "Failed to generate token", detail: data }, { status: 500 });
   }
-
 
   cachedToken = data.token;
   tokenGeneratedAt = now;

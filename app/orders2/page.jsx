@@ -81,108 +81,72 @@ export default function AdminOrdersPage() {
         setSelectedOrderId(orderId);
     };
 
-    async function updateOrderStatus(orderId, newStatus) {
+    const updateOrderStatus = async (orderId, newStatus) => {
         try {
             if (newStatus === "Shipped") {
                 const orderGroup = groupedOrders[orderId];
-                if (!orderGroup) {
-                    alert("Order group not found");
-                    return;
-                }
-
                 const freshDetailsMap = await fetchAllProductDetails(orderGroup.items);
-
-                // Enhanced payload with validation
                 const payload = {
                     orderId: orderGroup.orderId,
-                    name: orderGroup.user.name?.trim(),
+                    name: orderGroup.user.name,
                     number: orderGroup.user.number,
                     email: orderGroup.user.email,
-                    address: orderGroup.items[0]?.fullAddress,
-                    city: orderGroup.items[0]?.city,
-                    state: orderGroup.items[0]?.state,
-                    pincode: orderGroup.items[0]?.pincode,
+                    address: orderGroup.items[0].fullAddress,
+                    city: orderGroup.items[0].city,
+                    state: orderGroup.items[0].state,
+                    pincode: orderGroup.items[0].pincode,
                     amount: orderGroup.amount,
-                    method: orderGroup.method,
+                    method: orderGroup.items[0].method, // ✅ ADD this
                     items: orderGroup.items.map((item) => ({
                         productId: item.productId,
-                        productName: freshDetailsMap[item.productId]?.productName || `Product ${item.productId}`,
+                        productName: freshDetailsMap[item.productId]?.productName,
                         quantity: item.quantity,
                         amount: item.amount,
                     })),
                 };
 
-                // Validate address data before sending
-                if (!payload.address || !payload.city || !payload.state || !payload.pincode) {
-                    alert("Missing shipping address details. Please check the order information.");
+
+                const shipRes = await fetch("/api/shiprocket/order", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await shipRes.json();
+
+                if (!shipRes.ok) {
+                    alert("Failed to ship via Shiprocket");
                     return;
                 }
 
-                console.log("Sending to Delhivery API:", payload);
-
-                try {
-                    const delhiveryRes = await fetch("/api/delhivery/order", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(payload),
-                    });
-
-                    // Handle non-JSON responses
-                    const responseText = await delhiveryRes.text();
-                    let result;
-
-                    try {
-                        result = responseText ? JSON.parse(responseText) : {};
-                    } catch (parseError) {
-                        console.error("Failed to parse JSON response:", responseText);
-                        throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}`);
-                    }
-
-                    console.log("Delhivery Response:", result);
-
-                    if (!delhiveryRes.ok) {
-                        throw new Error(result.error || `HTTP ${delhiveryRes.status}: ${result.details || 'Unknown error'}`);
-                    }
-
-                    if (!result.success) {
-                        throw new Error(result.error || "Failed to create shipment");
-                    }
-
-                    console.log("Shipment created successfully. Waybill:", result.waybill);
-
-                } catch (delhiveryError) {
-                    console.error("Delhivery API Error:", delhiveryError);
-                    alert(`Failed to create Delhivery shipment: ${delhiveryError.message}`);
-                    return; // Stop here if Delhivery failed
-                }
+                console.log("Shiprocket Response:", result);
             }
 
-            // Continue with status update only if Delhivery succeeded
+            // Proceed with order status update
             const res = await fetch("/api/order/status", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-api-key": process.env.NEXT_PUBLIC_API_KEY, // ✅ send key
+                    "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
                 },
                 body: JSON.stringify({ orderId, status: newStatus }),
             });
 
-
-            const statusResult = await res.json();
+            const result = await res.json();
             if (res.ok) {
-                alert("Order status updated and shipment created successfully!");
+                alert("Order status updated");
                 fetchOrders();
             } else {
-                alert(statusResult.error || "Failed to update order status");
+                alert(result.error || "Failed to update");
             }
         } catch (error) {
             console.error("Error updating status:", error);
-            alert("Error occurred: " + error.message);
+            alert("Error occurred");
         }
-    }
-
+    };
 
 
 
