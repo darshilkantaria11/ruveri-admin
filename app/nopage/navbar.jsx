@@ -13,7 +13,7 @@ export default function Navbar() {
 
     return (
         <>
-            <div className="flex justify-between items-center px-4 py-2 bg-g2 lv">
+            <div className="flex justify-between items-center px-4 py-2 bg-b2 lv">
                 {/* Left side: Logo */}
                 <Link href="/">
                     <div className="flex items-center">
@@ -28,7 +28,7 @@ export default function Navbar() {
 
                 {/* Right side: Book a Tour button */}
                 <div className='flex flex-row'>
-                    <Link href="/dashboard" className="bg-g1 px-6 py-2 rounded-full">
+                    <Link href="/dashboard" className="bg-b3 px-6 py-2 rounded-full">
                        Dashboard
                     </Link>
                    

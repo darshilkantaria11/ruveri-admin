@@ -24,12 +24,12 @@ const productSchema = new Schema(
       required: [true, "Image 2 is required"],
     },
     img3: {
-      type: String,
-      required: [true, "Image 3 is required"],
+      type: String, // Optional
+      required: false,
     },
     img4: {
-      type: String,
-      required: [true, "Image 4 is required"],
+      type: String, // Optional
+      required: false,
     },
     description: {
       type: String,
@@ -41,27 +41,19 @@ const productSchema = new Schema(
       required: [true, "Material is required"],
       trim: true,
     },
-    fontName: {
-      type: String,
-      required: [true, "Font name is required"],
-      trim: true,
-    },
-    chain1: {
-      type: String,
-      trim: true,
-    },
-    chain2: {
-      type: String,
-      trim: true,
-    },
-    chain3: {
-      type: String,
-      trim: true,
-    },
     category: {
       type: String,
-      enum: ["singlenamenecklace", "couplenamenecklace", "keychain", "rakhi", "carcharam", "skeychain", "ckeychain", "designerpendents",],
-      default: "singlenamenecklace",
+      enum: [
+        "bangles",
+        "bracelets",
+        "chains",
+        "earrings",
+        "necklace",
+        "mencollections",
+        "pendents",
+        "rings",
+      ],
+      default: "rings",
     },
     status: {
       type: String,

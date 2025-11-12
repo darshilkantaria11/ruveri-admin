@@ -18,40 +18,6 @@ export async function POST(req) {
 
         const {
             category,
-            status, 
-            productName, 
-            strikeoutPrice, 
-            originalPrice, 
-            img1, 
-            img2, 
-            img3, 
-            img4, 
-            description, 
-            material, 
-            fontName,
-            chain1,
-            chain2,
-            chain3
-        } = data;
-
-        // ✅ Validate Required Fields
-        if (
-            !productName ||
-            !strikeoutPrice ||
-            !originalPrice ||
-            !img1 ||
-            !img2 ||
-            !img3 ||
-            !img4 ||
-            !description ||
-            !material ||
-            !fontName
-        ) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-        }
-
-        const newProduct = new Product({
-            category,
             status,
             productName,
             strikeoutPrice,
@@ -62,13 +28,38 @@ export async function POST(req) {
             img4,
             description,
             material,
-            fontName,
-            chain1,
-            chain2,
-            chain3
+        } = data;
+
+        // ✅ Validate Required Fields (img3 & img4 are optional now)
+        if (
+            !productName ||
+            !strikeoutPrice ||
+            !originalPrice ||
+            !img1 ||
+            !img2 ||
+            !description ||
+            !material
+        ) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        // ✅ Create New Product
+        const newProduct = new Product({
+            category,
+            status,
+            productName,
+            strikeoutPrice,
+            originalPrice,
+            img1,
+            img2,
+            img3: img3 || null,  // optional
+            img4: img4 || null,  // optional
+            description,
+            material,
         });
 
         await newProduct.save();
+
         return NextResponse.json({ message: "Product added successfully" }, { status: 201 });
 
     } catch (error) {

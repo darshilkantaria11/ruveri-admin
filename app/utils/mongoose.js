@@ -18,3 +18,4 @@ export async function dbConnect() {
 connection.on("connected", () => console.log("MongoDB connected"));
 
 connection.on("error", (err) => console.error("MongoDB error:", err.message));
+
