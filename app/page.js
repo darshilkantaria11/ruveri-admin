@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-b3">
       <div className="w-full max-w-sm p-6 bg-b2 rounded-lg shadow-lg">
         <div className="text-center mb-6">
-          <img src="/Logo.svg" alt="Knottin Daycare Logo" className="w-20 mx-auto mb-3" />
+          <img src="/logo.png" alt="Knottin Daycare Logo" className="w-20 mx-auto mb-3" />
           <h2 className="text-3xl font-bold text-white">Ruveri Jewel</h2>
           <p className="text-xl text-white">Admin Login</p>
         </div>

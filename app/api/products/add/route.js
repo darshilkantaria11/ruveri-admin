@@ -17,45 +17,62 @@ export async function POST(req) {
         const data = await req.json();
 
         const {
-            category,
-            status,
             productName,
-            strikeoutPrice,
-            originalPrice,
+            makingCharges,
+            metalPrice,
+            grossWeight,
+            netWeight,
+            metal,
+            purity,
+            color,
+            gender,
             img1,
             img2,
             img3,
             img4,
             description,
-            material,
+            category,
+            status,
         } = data;
 
-        // ✅ Validate Required Fields (img3 & img4 are optional now)
+        // ✅ Validate Required Fields (img3 & img4 are optional)
         if (
             !productName ||
-            !strikeoutPrice ||
-            !originalPrice ||
+            !makingCharges ||
+            !metalPrice ||
+            !grossWeight ||
+            !netWeight ||
+            !metal ||
+            !purity ||
+            !color ||
+            !gender ||
             !img1 ||
             !img2 ||
             !description ||
-            !material
+            !category ||
+            !status
         ) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
         // ✅ Create New Product
         const newProduct = new Product({
-            category,
-            status,
             productName,
-            strikeoutPrice,
-            originalPrice,
+            makingCharges,
+            metalPrice,
+            grossWeight,
+            netWeight,
+            metal,
+            purity,
+            color,
+            gender,
             img1,
             img2,
             img3: img3 || null,  // optional
             img4: img4 || null,  // optional
             description,
-            material,
+            category,
+            status,
         });
 
         await newProduct.save();
@@ -63,7 +80,7 @@ export async function POST(req) {
         return NextResponse.json({ message: "Product added successfully" }, { status: 201 });
 
     } catch (error) {
-        console.error("Error:", error);
+        console.log("Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
