@@ -9,15 +9,19 @@ export default function CurrencyPage() {
 
   // 🔽 Load Currency Data
   async function load() {
-    const res = await fetch("/api/currency");
-    const data = await res.json();
+  const res = await fetch("/api/currency", {
+    headers: {
+      "x-api-key": process.env.NEXT_PUBLIC_API_KEY // PUBLIC KEY for Client
+    }
+  });
 
-    // 📌 Sort High to Low INR
-    const sorted = data.data.sort((a, b) => b.rateInINR - a.rateInINR);
+  const data = await res.json();
 
-    setList(sorted);
-    setLoading(false);
-  }
+  const sorted = data.data.sort((a, b) => b.rateInINR - a.rateInINR);
+  setList(sorted);
+  setLoading(false);
+}
+
 
   useEffect(() => {
     load();
@@ -30,7 +34,7 @@ export default function CurrencyPage() {
       const res = await fetch("/api/currency/fetch", {
         method: "POST",
         headers: {
-          "x-api-key": process.env.SERVER_API_KEY,
+          "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
         },
       });
 

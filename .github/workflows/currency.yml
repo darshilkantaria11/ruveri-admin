@@ -1,0 +1,17 @@
+name: Daily Currency Update
+
+on:
+  schedule:
+    - cron: "35 14 * * *"  # ⏰ Runs at 8:05 PM IST every day
+  workflow_dispatch:        # ▶ Manual trigger option
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit Currency Update API
+        run: |
+          curl -X POST https://ruveri-admin.vercel.app/api/currency/fetch \
+          -H "x-api-key: ${NEXT_PUBLIC_API_KEY}"
+        env:
+          NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}

@@ -10,7 +10,7 @@ function delay(ms) {
 export async function POST(req) {
   try {
     const authKey = req.headers.get("x-api-key");
-    const SERVER_API_KEY = process.env.SERVER_API_KEY;
+    const SERVER_API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
     // 🛑 Check API Authentication
     if (!authKey || authKey !== SERVER_API_KEY) {
