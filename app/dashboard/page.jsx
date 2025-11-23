@@ -44,10 +44,20 @@ export default function Dashboard() {
             <p className="text-gray-600">
               Manage the Orders
             </p>
-            
+
           </div>
         </Link>
-         {/* <Link href="/abandonedcart">
+        <Link href="/currency">
+          <div className={cardClasses}>
+            <h2 className="text-3xl font-bold text-b1 mb-2 group-hover:text-b1 transition-colors">
+              Currency
+            </h2>
+            <p className="text-gray-600">
+              Global currency rates compared to the Indian Rupee.
+            </p>
+          </div>
+        </Link>
+        {/* <Link href="/abandonedcart">
           <div className={cardClasses}>
             <h2 className="text-3xl font-bold text-b1 mb-2 group-hover:text-g4 transition-colors">
               Abandoned carts

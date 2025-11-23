@@ -16,7 +16,7 @@ export default function Navbar() {
             <div className="flex justify-between items-center px-4 py-2 bg-b2 lv">
                 {/* Left side: Logo */}
                 <Link href="/">
-                    <div className="flex items-center">
+                    <div className="flex items-center bg-b3 rounded-full p-1">
                         <Image
                             src={Logo}// Replace with your logo path
                             alt="Logo"
