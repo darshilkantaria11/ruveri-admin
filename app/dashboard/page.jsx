@@ -57,6 +57,16 @@ export default function Dashboard() {
             </p>
           </div>
         </Link>
+        <Link href="/metalprice">
+          <div className={cardClasses}>
+            <h2 className="text-3xl font-bold text-b1 mb-2 group-hover:text-b1 transition-colors">
+              Metal Price
+            </h2>
+            <p className="text-gray-600">
+              Gold and Silver Price(INR) in grams
+            </p>
+          </div>
+        </Link>
         {/* <Link href="/abandonedcart">
           <div className={cardClasses}>
             <h2 className="text-3xl font-bold text-b1 mb-2 group-hover:text-g4 transition-colors">

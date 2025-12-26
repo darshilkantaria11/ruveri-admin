@@ -1,3 +1,5 @@
+// api/currency/fetch
+
 import { dbConnect } from "../../../utils/mongoose";
 import Currency from "../../../models/currency";
 import { NextResponse } from "next/server";
