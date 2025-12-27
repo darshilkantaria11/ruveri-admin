@@ -10,9 +10,6 @@ export default function MetalPricesPage() {
   // 🔽 Load Metal Prices
   async function load() {
     const res = await fetch("/api/metals", {
-      headers: {
-        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
-      },
     });
 
     const json = await res.json();
@@ -27,9 +24,6 @@ export default function MetalPricesPage() {
 
       const res = await fetch("/api/metals/fetch", {
         method: "POST",
-        headers: {
-          "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
-        },
       });
 
       const data = await res.json();

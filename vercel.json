@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/metals/fetch",
-      "schedule": "*/30 * * * *"
-    }
-  ]
-}
