@@ -15,4 +15,4 @@ jobs:
           curl -X POST https://ruveri-admin.vercel.app/api/metals/fetch \
           -H "x-api-key: ${NEXT_PUBLIC_API_KEY}"
         env:
-          API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
+          NEXT_PUBLIC_API_KEY: ${{ secrets.NEXT_PUBLIC_API_KEY }}
