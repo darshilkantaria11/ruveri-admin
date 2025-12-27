@@ -4,14 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Dashboard() {
-    const router = useRouter();
-
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token !== "admin-token") {
-            router.push("/");
-        }
-    }, [router]);
+ 
 
     const cardClasses =
         "flex flex-col justify-center items-center text-center group bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition duration-300 hover:scale-105 min-h-[250px]";
