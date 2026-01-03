@@ -28,7 +28,7 @@ export default function Navbar() {
 
                 {/* Right side: Book a Tour button */}
                 <div className='flex flex-row'>
-                    <Link href="/dashboard" className="bg-b3 px-6 py-2 rounded-full">
+                    <Link href="/admindashboard" className="bg-b3 px-6 py-2 rounded-full">
                        Dashboard
                     </Link>
                    

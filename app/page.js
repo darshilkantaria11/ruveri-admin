@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     if (token === expectedToken) {
       console.log("Already logged in, redirecting to dashboard");
-      router.replace("/dashboard");
+      router.replace("/admindashboard");
     }
   }, [router]);
 
