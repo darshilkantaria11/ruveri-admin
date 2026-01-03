@@ -87,7 +87,7 @@ export default function MetalPricesPage() {
                 className="p-6 border rounded-xl shadow-md hover:scale-105 transition"
               >
                 <h2 className="text-2xl font-bold mb-2">
-                  {item.metal === "GOLD" ? "🥇 Gold" : "🥈 Silver"}
+                  {item.metal === "gold" ? "🥇 Gold" : "🥈 Silver"}
                 </h2>
 
                 <p className="text-3xl font-extrabold text-g2">

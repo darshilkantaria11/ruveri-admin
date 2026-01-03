@@ -211,8 +211,8 @@ export default function ProductDetailPage() {
               className="w-full px-4 py-3 border border-b1 rounded-lg"
               required
             >
-              <option value="gold">Gold</option>
-              <option value="silver">Silver</option>
+              <option value="gold">gold</option>
+              <option value="silver">silver</option>
             </select>
           </div>
 

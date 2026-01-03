@@ -3,14 +3,15 @@ import { Schema, model, models } from "mongoose";
 const metalPriceSchema = new Schema(
   {
     metal: {
-      type: String, // GOLD | SILVER
+      type: String,
       required: true,
       unique: true,
-      uppercase: true,
-      trim: true,
-    },
+      enum: ["gold", "silver"],
+      lowercase: true,
+    }
+    ,
     priceInINR: {
-      type: Number,
+      type: Number, // exact (float)
       required: true,
     },
     updatedAt: {

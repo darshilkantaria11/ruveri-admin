@@ -3,7 +3,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
 import Navbar from "./nopage/navbar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 const geistSans = localFont({
@@ -21,24 +21,43 @@ const geistMono = localFont({
 export default function RootLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (pathname === '/') return; // allow login page
+    // allow login page
+    if (pathname === "/") {
+      setChecked(true);
+      return;
+    }
 
-    const token = localStorage.getItem('admin_token');
-    const expectedToken = btoa(
-      `${process.env.NEXT_PUBLIC_ADMIN_USERNAME}:${process.env.NEXT_PUBLIC_ADMIN_PASSWORD}`
-    );
+    const token = localStorage.getItem("admin_token");
+
+    const USER = process.env.NEXT_PUBLIC_ADMIN_USERNAME;
+    const PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+
+    // 🔴 ENV SAFETY CHECK (important)
+    if (!USER || !PASS) {
+      console.error("❌ Admin env vars missing");
+      router.replace("/");
+      return;
+    }
+
+    const expectedToken = btoa(`${USER}:${PASS}`);
 
     if (token !== expectedToken) {
-      router.replace('/');
+      router.replace("/");
+    } else {
+      setChecked(true);
     }
   }, [pathname, router]);
+
+  // ⏳ Prevent hydration redirect loop
+  if (!checked && pathname !== "/") return null;
 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-  <Navbar />
+        <Navbar />
         {children}
       </body>
     </html>

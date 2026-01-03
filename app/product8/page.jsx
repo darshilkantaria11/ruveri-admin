@@ -5,13 +5,37 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+/* ------------------ PURITY MULTIPLIERS ------------------ */
+const getPurityMultiplier = (metal, purity) => {
+  const goldMap = {
+    "24K": 1,
+    "22K": 0.916,
+    "20K": 0.833,
+    "18K": 0.75,
+    "14K": 0.585,
+  };
+
+  const silverMap = {
+    "999 Silver": 1,
+    "950 Silver": 0.95,
+    "925 Silver": 0.925,
+    "900 Silver": 0.9,
+    "800 Silver": 0.8,
+  };
+
+  if (metal === "gold") return goldMap[purity] || 1;
+  if (metal === "silver") return silverMap[purity] || 1;
+
+  return 1;
+};
+
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  // 🔥 Fetch Products
+  /* ------------------ FETCH PRODUCTS ------------------ */
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -24,25 +48,27 @@ export default function ProductsPage() {
         if (!response.ok) throw new Error("Error fetching products");
 
         const data = await response.json();
-        const filterProducts = data.filter(
+
+        const filtered = data.filter(
           (product) => product.category?.toLowerCase() === "rings"
         );
 
-        setProducts(filterProducts);
-      } catch (error) {
-        setError(error.message);
+        setProducts(filtered);
+      } catch (err) {
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     }
+
     fetchProducts();
   }, []);
 
   return (
     <div className="min-h-screen bg-b3 p-6 md:p-10">
       <div className="max-w-7xl mx-auto">
-        
-        {/* Header */}
+
+        {/* ------------------ HEADER ------------------ */}
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-4xl font-extrabold text-gray-800 tracking-wide">
             💍 Rings Collection
@@ -50,27 +76,27 @@ export default function ProductsPage() {
 
           <button
             onClick={() => router.push("/product8/add")}
-            className="bg-green-600 text-white px-5 py-3 rounded-lg shadow-md hover:bg-green-700 hover:scale-105 transition transform"
+            className="bg-green-600 text-white px-5 py-3 rounded-lg shadow-md hover:bg-green-700 hover:scale-105 transition"
           >
             + Add Rings
           </button>
         </div>
 
-        {/* Loading */}
+        {/* ------------------ LOADING ------------------ */}
         {loading && (
           <div className="flex justify-center items-center min-h-[300px]">
-            <div className="w-14 h-14 border-4 border-t-green-500 border-gray-200 rounded-full animate-spin"></div>
+            <div className="w-14 h-14 border-4 border-t-green-500 border-gray-200 rounded-full animate-spin" />
           </div>
         )}
 
-        {/* Error */}
+        {/* ------------------ ERROR ------------------ */}
         {error && (
           <div className="text-center text-red-600 font-semibold text-lg">
             {error}
           </div>
         )}
 
-        {/* Products */}
+        {/* ------------------ PRODUCTS ------------------ */}
         {!loading && !error && (
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
@@ -81,9 +107,23 @@ export default function ProductsPage() {
             {products.length > 0 ? (
               products.map((product) => {
                 const netWeight = Number(product.netWeight) || 0;
-                const metalPrice = Number(product.metalPrice) || 0;
+                const metalPrice = Number(product.metalPrice) || 0; // PURE price
                 const makingCharges = Number(product.makingCharges) || 0;
-                const total = netWeight * metalPrice + makingCharges;
+
+                /* -------- PRICE CALCULATION (CORE LOGIC) -------- */
+                const purityMultiplier = getPurityMultiplier(
+                  product.metal,
+                  product.purity
+                );
+
+                const effectiveMetalPrice =
+                  metalPrice * purityMultiplier;
+
+                const rawTotal =
+                  netWeight * effectiveMetalPrice + makingCharges;
+
+                // 🔒 ALWAYS ROUND UP
+                const total = Math.ceil(rawTotal);
 
                 return (
                   <motion.div
@@ -104,15 +144,15 @@ export default function ProductsPage() {
                           <img
                             src={product.img1}
                             alt={product.productName}
-                            className="w-full object-cover rounded-md mb-4"
+                            className="w-full h-48 object-cover rounded-md mb-4"
                           />
                         ) : (
-                          <div className="w-full h-40 bg-gray-300 flex items-center justify-center rounded-md">
+                          <div className="w-full h-48 bg-gray-300 flex items-center justify-center rounded-md mb-4">
                             <span className="text-gray-500">No Image</span>
                           </div>
                         )}
 
-                        {/* Product Name */}
+                        {/* Name */}
                         <h2 className="text-lg font-bold text-gray-800 truncate">
                           {product.productName}
                         </h2>
@@ -121,22 +161,14 @@ export default function ProductsPage() {
                           {product.category}
                         </p>
 
-                        {/* Metal Details */}
+                        {/* Details */}
                         <div className="mt-2 text-sm space-y-1">
-                          <p className="text-gray-700">
-                            <span className="font-semibold">Metal:</span>{" "}
-                            {product.metal}
-                          </p>
-                          <p className="text-gray-700">
-                            <span className="font-semibold">Gross:</span>{" "}
-                            {product.grossWeight} g
-                          </p>
-                          <p className="text-gray-700">
-                            <span className="font-semibold">Net:</span>{" "}
-                            {product.netWeight} g
-                          </p>
-                          <p className="text-gray-700">
-                            <span className="font-semibold">Making:</span> ₹
+                          <p><b>Metal:</b> {product.metal}</p>
+                          <p><b>Purity:</b> {product.purity}</p>
+                          <p><b>Gross:</b> {product.grossWeight} g</p>
+                          <p><b>Net:</b> {product.netWeight} g</p>
+                          <p>
+                            <b>Making:</b> ₹
                             {makingCharges.toLocaleString()}
                           </p>
                         </div>
@@ -152,11 +184,11 @@ export default function ProductsPage() {
                         {/* Status */}
                         <div className="mt-3 text-sm font-bold">
                           <span
-                            className={`${
+                            className={
                               product.status === "live"
                                 ? "text-green-600"
                                 : "text-red-700"
-                            }`}
+                            }
                           >
                             {product.status.toUpperCase()}
                           </span>
