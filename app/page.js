@@ -1,51 +1,60 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [userId, setUserId] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   const router = useRouter();
 
-  // ✅ Ensure client-side only
+  // Ensure client-side
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    // If already logged in → redirect
+    const token = localStorage.getItem("admin_token");
+    const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME?.trim();
+    const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD?.trim();
+    const expectedToken = btoa(`${ADMIN_USERNAME}:${ADMIN_PASSWORD}`);
+
+    if (token === expectedToken) {
+      console.log("Already logged in, redirecting to dashboard");
+      router.replace("/dashboard");
+    }
+  }, [router]);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    setError('');
-
     if (!mounted) return;
 
+    setLoading(true);
+    setError("");
+
     const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME?.trim();
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD?.trim();
+    const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD?.trim();
+    const expectedToken = btoa(`${ADMIN_USERNAME}:${ADMIN_PASSWORD}`);
 
+    console.log("Login attempt:", { userId, password, ADMIN_USERNAME, ADMIN_PASSWORD });
 
-    // 🔴 Safety check (important for localhost)
-    if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
-      setError('Environment variables not loaded');
-      return;
-    }
+    if (userId.trim() === ADMIN_USERNAME && password.trim() === ADMIN_PASSWORD) {
+      localStorage.setItem("admin_token", expectedToken);
+      console.log("Login success, token saved:", expectedToken);
 
-    if (userId === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      const token = btoa(`${userId}:${password}`);
-
-      localStorage.setItem('admin_token', token);
-
-      // ✅ use replace to avoid back navigation loop
-      router.replace('/dashboard');
+      router.replace("/dashboard"); // proper Next.js redirect
     } else {
-      setError('Invalid credentials');
+      console.log("Login failed");
+      setError("Invalid credentials");
     }
+
+    setLoading(false);
   };
 
-  // Prevent hydration mismatch
-  if (!mounted) return null;
+  if (!mounted) return null; // prevent hydration mismatch
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-b3">
@@ -60,9 +69,10 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD?.trim();
             <input
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              className="w-full px-3 py-2 rounded"
+              className="w-full px-3 py-2 rounded bg-white"
               autoComplete="username"
               required
+              disabled={loading}
             />
           </div>
 
@@ -72,9 +82,10 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD?.trim();
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded"
+              className="w-full px-3 py-2 rounded bg-white"
               autoComplete="current-password"
               required
+              disabled={loading}
             />
           </div>
 
@@ -82,9 +93,10 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD?.trim();
 
           <button
             type="submit"
-            className="w-full bg-b1 text-white py-2 rounded hover:opacity-90 transition"
+            disabled={loading}
+            className="w-full bg-b1 text-white py-2 rounded hover:opacity-90 transition disabled:opacity-50"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>

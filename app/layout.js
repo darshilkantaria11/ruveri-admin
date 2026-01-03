@@ -21,44 +21,69 @@ const geistMono = localFont({
 export default function RootLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [checked, setChecked] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // allow login page
-    if (pathname === "/") {
-      setChecked(true);
-      return;
-    }
+    setMounted(true);
+  }, []);
 
-    const token = localStorage.getItem("admin_token");
+  useEffect(() => {
+    if (!mounted) return;
 
-    const USER = process.env.NEXT_PUBLIC_ADMIN_USERNAME;
-    const PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+    const checkAuth = () => {
+      setLoading(true);
 
-    // 🔴 ENV SAFETY CHECK (important)
-    if (!USER || !PASS) {
-      console.error("❌ Admin env vars missing");
-      router.replace("/");
-      return;
-    }
+      const publicPaths = ["/", "/login"];
+      const currentPath = pathname?.split("?")[0] || "/";
 
-    const expectedToken = btoa(`${USER}:${PASS}`);
+      // Public page → allow
+      if (publicPaths.includes(currentPath)) {
+        console.log("Public path:", currentPath);
+        setAuthorized(true);
+        setLoading(false);
+        return;
+      }
 
-    if (token !== expectedToken) {
-      router.replace("/");
-    } else {
-      setChecked(true);
-    }
-  }, [pathname, router]);
+      const token = localStorage.getItem("admin_token");
+      const ADMIN_USERNAME = process.env.NEXT_PUBLIC_ADMIN_USERNAME?.trim();
+      const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD?.trim();
+      const expectedToken = btoa(`${ADMIN_USERNAME}:${ADMIN_PASSWORD}`);
 
-  // ⏳ Prevent hydration redirect loop
-  if (!checked && pathname !== "/") return null;
+      console.log("Auth check:", { token, expectedToken, match: token === expectedToken });
+
+      if (token === expectedToken) {
+        setAuthorized(true);
+      } else {
+        console.log("Invalid token, redirecting to login");
+        localStorage.removeItem("admin_token");
+        router.replace("/"); // safe Next.js redirect
+      }
+
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, [pathname, mounted, router]);
+
+  if (!mounted || loading) {
+    return (
+      <html lang="en">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <div className="min-h-screen flex items-center justify-center bg-b3">
+            <div className="text-white">Loading...</div>
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Navbar />
-        {children}
+        {pathname !== "/" && pathname !== "/login" && <Navbar />}
+        {authorized && children}
       </body>
     </html>
   );
