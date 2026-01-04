@@ -2,8 +2,15 @@ import { dbConnect } from "../../../../utils/mongoose";
 import Product from "../../../../models/product";
 import { NextResponse } from "next/server";
 
-export async function PUT(req, { params }) {
-  const { id } = params;
+export async function PUT(req, context) {
+  // Unwrap params before accessing
+  const { params } = context;
+  const resolvedParams = await params;
+  const id = resolvedParams?.id;
+
+  if (!id) {
+    return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
+  }
 
   try {
     // 🔒 Extract API Key from Headers

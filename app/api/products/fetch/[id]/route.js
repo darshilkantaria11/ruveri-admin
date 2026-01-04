@@ -3,8 +3,10 @@ import Product from '../../../../models/product';
 import { NextResponse } from 'next/server';
 
 export async function GET(req, context) {
-    const { params } = context; // Awaiting params is not needed in App Router
-    const id = params?.id;
+    // Unwrap params because it's now a Promise
+    const { params } = context;
+    const resolvedParams = await params; // <-- unwrap the promise
+    const id = resolvedParams?.id;
 
     if (!id) {
         return NextResponse.json({ message: 'Invalid product ID' }, { status: 400 });
