@@ -18,6 +18,7 @@ const itemSchema = new Schema(
     method: {
       type: String,
       required: true,
+      enum: ["COD", "prepaid"],
     },
     pincode: {
       type: String,
@@ -39,11 +40,6 @@ const itemSchema = new Schema(
       required: true,
       trim: true,
     },
-    engravedName: {
-      type: String,
-      trim: true,
-      default: "",
-    },
     orderId: {
       type: String,
       required: true,
@@ -52,6 +48,28 @@ const itemSchema = new Schema(
     orderStatus: {
       type: String,
       default: "Confirmed",
+      enum: ["Confirmed", "Processing", "Shipped", "Delivered", "Cancelled"],
+    },
+    // Razorpay payment details (only for prepaid orders)
+    razorpayOrderId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    razorpayPaymentId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    razorpaySignature: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "completed", "failed"],
+      default: "pending",
     },
     createdAt: {
       type: Date,
@@ -63,11 +81,6 @@ const itemSchema = new Schema(
 
 const orderSchema = new Schema(
   {
-    number: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     name: {
       type: String,
       required: true,
@@ -82,6 +95,5 @@ const orderSchema = new Schema(
   },
   { timestamps: true }
 );
-
 
 export default models.Order || model("Order", orderSchema);

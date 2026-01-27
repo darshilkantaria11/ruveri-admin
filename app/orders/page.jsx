@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 
 export default function AdminOrdersPage() {
@@ -28,9 +28,11 @@ export default function AdminOrdersPage() {
 
   function groupOrdersById(allOrders) {
     const grouped = {};
-    [...allOrders].reverse().forEach((order) => {
-      [...order.items].reverse().forEach((item) => {
-        if (item.orderStatus !== "Confirmed") return; // Filter Confirmed orders only here
+
+    allOrders.forEach((order) => {
+      order.items.forEach((item) => {
+        // Filter only Confirmed orders
+        if (item.orderStatus !== "Confirmed") return;
 
         if (!grouped[item.orderId]) {
           grouped[item.orderId] = {
@@ -38,18 +40,24 @@ export default function AdminOrdersPage() {
             createdAt: item.createdAt,
             method: item.method,
             orderStatus: item.orderStatus,
-            amount: 0,
-            user: { name: order.name, number: order.number, email: order.email },
+            amount: item.amount, // This is the purchased amount
+            user: {
+              name: order.name,
+              email: order.email
+            },
             items: [],
           };
         }
-        grouped[item.orderId].amount = item.amount;
+
+        // Add item to the group
         grouped[item.orderId].items.push({
           ...item,
-          user: { name: order.name, number: order.number },
+          userName: order.name,
+          userEmail: order.email,
         });
       });
     });
+
     setGroupedOrders(grouped);
   }
 
@@ -59,7 +67,7 @@ export default function AdminOrdersPage() {
       const pid = item.productId;
       if (!detailsMap[pid]) {
         try {
-          const res = await fetch(`/api/products/fetch/${pid}`, {
+          const res = await fetch(`/api/fetch/${pid}`, {
             headers: { "x-api-key": process.env.NEXT_PUBLIC_API_KEY },
           });
           const product = await res.json();
@@ -94,26 +102,27 @@ export default function AdminOrdersPage() {
       const result = await res.json();
 
       if (res.ok) {
-        alert("Order status updated");
+        alert("Order status updated successfully");
         fetchOrders();
       } else {
         alert(result.error || "Failed to update");
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("Error occurred");
+      alert("Error occurred while updating status");
     }
   };
 
-
+  // Calculate total order amount
+  const calculateOrderTotal = (orderGroup) => {
+    return orderGroup.items.reduce((sum, item) => sum + item.amount, 0);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-10 font-sans">
       <h1 className="text-3xl font-extrabold mb-8 text-gray-800">
         Confirmed Orders Dashboard
       </h1>
-
-
 
       {/* Orders Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow-lg">
@@ -149,56 +158,58 @@ export default function AdminOrdersPage() {
                 </td>
               </tr>
             )}
-            {Object.values(groupedOrders).map((orderGroup) => (
-              <tr
-                key={orderGroup.orderId}
-                className="hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-mono text-sm max-w-[120px] truncate">
-                  {orderGroup.orderId}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
-                  {format(new Date(orderGroup.createdAt), "dd MMM yyyy, HH:mm")}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
-                  ₹{orderGroup.amount.toLocaleString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-700 uppercase font-medium">
-                  {orderGroup.method}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                    {orderGroup.orderStatus}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap space-x-2">
-                  <button
-                    onClick={() =>
-                      updateOrderStatus(orderGroup.orderId, "Crafting")
-                    }
-                    className="inline-flex items-center px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition"
-                  >
-                    Crafting
-                  </button>
-                  <button
-                    onClick={() =>
-                      updateOrderStatus(orderGroup.orderId, "Rejected")
-                    }
-                    className="inline-flex items-center px-3 py-1 rounded bg-red-600 text-white text-sm hover:bg-red-700 transition"
-                  >
-                    Reject
-                  </button>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => handleViewDetails(orderGroup.orderId)}
-                    className="inline-flex items-center px-3 py-1 rounded bg-green-600 text-white text-sm hover:bg-green-700 transition"
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {Object.values(groupedOrders)
+              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+              .map((orderGroup) => (
+                <tr
+                  key={orderGroup.orderId}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-mono text-sm max-w-[120px] truncate">
+                    {orderGroup.orderId}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
+                    {format(new Date(orderGroup.createdAt), "dd MMM yyyy, HH:mm")}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+                    ₹{calculateOrderTotal(orderGroup).toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-700 uppercase font-medium">
+                    {orderGroup.method}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                      {orderGroup.orderStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                    <button
+                      onClick={() =>
+                        updateOrderStatus(orderGroup.orderId, "Processing")
+                      }
+                      className="inline-flex items-center px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition"
+                    >
+                      Processing
+                    </button>
+                    <button
+                      onClick={() =>
+                        updateOrderStatus(orderGroup.orderId, "Cancelled")
+                      }
+                      className="inline-flex items-center px-3 py-1 rounded bg-red-600 text-white text-sm hover:bg-red-700 transition"
+                    >
+                      Cancel
+                    </button>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      onClick={() => handleViewDetails(orderGroup.orderId)}
+                      className="inline-flex items-center px-3 py-1 rounded bg-green-600 text-white text-sm hover:bg-green-700 transition"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
@@ -218,7 +229,6 @@ export default function AdminOrdersPage() {
             <h3 className="text-2xl font-semibold mb-6 border-b pb-2">
               Order Details - #{selectedOrderId}
             </h3>
-
 
             {/* Products List */}
             <div className="space-y-6">
@@ -247,34 +257,28 @@ export default function AdminOrdersPage() {
                             {product.productName}
                           </h4>
                           <p className="text-sm text-gray-600 mb-1">
-                            MRP: ₹{product.originalPrice.toLocaleString()}
+                            Current Price: ₹{product.totalPrice?.toLocaleString() || 'N/A'}
+                          </p>
+                          <p className="text-sm text-gray-600 mb-1">
+                            Buying Price: ₹{item.quantity > 0 ? Math.round(item.amount / item.quantity).toLocaleString() : 'N/A'}
                           </p>
                           <p className="text-sm mb-1">
                             Quantity: <strong>{item.quantity}</strong>
                           </p>
                           <p className="text-sm mb-1">
-                            Total: <strong>₹{(item.quantity * product.originalPrice).toLocaleString()}</strong>
+                            Item Total: <strong>₹{item.amount.toLocaleString()}</strong>
                           </p>
-
+                          <p className="text-sm mb-1">
+                            Payment Status: <strong className={item.paymentStatus === 'completed' ? 'text-green-600' : 'text-yellow-600'}>{item.paymentStatus}</strong>
+                          </p>
+                          {item.razorpayPaymentId && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Payment ID: {item.razorpayPaymentId}
+                            </p>
+                          )}
                         </>
                       ) : (
                         <p>Loading product info...</p>
-                      )}
-                      {item.engravedName && (
-                        <p className="text-sm mt-2">
-                          Engraved Name: <strong>{item.engravedName}</strong>
-                        </p>
-                      )}
-
-                      {item.chain && (
-                        <p className="text-sm mt-2 flex items-center gap-2">
-                          Chain:
-                          <img
-                            src={item.chain}
-                            alt="Selected Chain"
-                            className="rounded-md object-cover w-32 h-32"
-                          />
-                        </p>
                       )}
 
                       <p className="text-xs text-gray-500 mt-1">
@@ -296,35 +300,23 @@ export default function AdminOrdersPage() {
                 {groupedOrders[selectedOrderId].items[0].state} -{" "}
                 {groupedOrders[selectedOrderId].items[0].pincode}
               </p>
-              <p className="text-gray-700">Phone: {groupedOrders[selectedOrderId].user.number}</p>
               <p className="text-gray-700">Email: {groupedOrders[selectedOrderId].user.email}</p>
-
 
               <div className="mt-4 space-y-1 text-gray-800 font-medium">
                 <p>Payment Method: {groupedOrders[selectedOrderId].method}</p>
                 <p>Status: {groupedOrders[selectedOrderId].orderStatus}</p>
                 <p>Order ID: {groupedOrders[selectedOrderId].orderId}</p>
-                {/* <p className="font-bold text-g2 bg-g1">Purchased at: ₹{groupedOrders[selectedOrderId].amount}</p> */}
               </div>
-              {(() => {
-                let totalMRP = 0;
-                groupedOrders[selectedOrderId].items.forEach((item) => {
-                  const product = productDetailsMap[item.productId];
-                  if (product) {
-                    totalMRP += item.quantity * product.originalPrice;
-                  }
-                });
 
-                const purchasedAt = groupedOrders[selectedOrderId].amount;
-                const discount = totalMRP - purchasedAt;
+              {/* Order Summary */}
+              {(() => {
+                const orderTotal = calculateOrderTotal(groupedOrders[selectedOrderId]);
 
                 return (
                   <div className="mt-4 space-y-1 text-gray-800 font-medium">
-                    <p>Total MRP: ₹{totalMRP.toLocaleString()}</p>
-                    <p className="text-green-600 font-bold">
-                      Discount given: ₹{discount > 0 ? discount.toLocaleString() : 0}
+                    <p className="font-bold text-lg text-green-600 bg-green-50 p-2 rounded">
+                      Total Purchased Amount: ₹{orderTotal.toLocaleString()}
                     </p>
-                    <p className="font-bold text-g2 bg-g1">Purchased at: ₹{purchasedAt.toLocaleString()}</p>
                   </div>
                 );
               })()}
